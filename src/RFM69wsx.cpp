@@ -18,9 +18,6 @@ bool RFM69wsx::initialize(uint32_t freq)
     /* 0x04 */ { REG_BITRATELSB, 0x40},
     /* 0x05 */ { REG_FDEVMSB, RF_FDEVMSB_35000}, // WS90 Fdev = 35 kHz
     /* 0x06 */ { REG_FDEVLSB, RF_FDEVLSB_35000},
-    // /* 0x05 */ { REG_FDEVMSB, RF_FDEVMSB_90000}, // WS90 Fdev = 90 kHz
-    // /* 0x06 */ { REG_FDEVLSB, RF_FDEVLSB_90000},
-    // /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_3 }, // (BitRate < 2 * RxBw)
     /* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2 }, // (BitRate < 2 * RxBw)
     /* 0x1E */ { REG_AFCFEI, RF_AFCFEI_AFCAUTOCLEAR_ON | RF_AFCFEI_AFCAUTO_ON },
     /* 0x25 */ { REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 }, // DIO0 is the only IRQ we're using
@@ -34,7 +31,6 @@ bool RFM69wsx::initialize(uint32_t freq)
     /* 0x37 */ { REG_PACKETCONFIG1, RF_PACKET1_CRCAUTOCLEAR_OFF },
     /* 0x38 */ { REG_PAYLOADLENGTH, 32 },
     /* 0x3C */ { REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE }, // TX on FIFO not empty
-    // /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_NONE | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
     /* 0x3D */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, // RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
     /* 0x6F */ { REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0 }, // run DAGC continuously in RX mode for Fading Margin Improvement, recommended default for AfcLowBetaOn=0
     {255, 0}
