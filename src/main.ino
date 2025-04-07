@@ -53,8 +53,8 @@ void setup(void) {
   bmp388.performReading();
 #endif
 
-  printBanner();
   blink(750);
+  printBanner();
 }
 
 void loop() {
@@ -169,9 +169,6 @@ void printTHP() {
   P = 101320.0;
   H = 45;
 #endif
-
-  // {"time" : "2021-04-08 18:11:01", "model" : "Fineoffset-WH25", "id" : 121, 
-  //  "battery_ok" : 1, "temperature_C" : 20.000, "humidity" : 48, "pressure_hPa" : 979.100, "mic" : "CRC"}
 
   // time is added by the host
   Serial.print(F("{\"model\":\"Fineoffset-WH25\",\"id\":555,\"battery_ok\":1,\"mic\":\"CRC\","));
