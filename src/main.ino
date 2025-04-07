@@ -108,12 +108,13 @@ uint8_t crc8(uint8_t const message[], unsigned nBytes, uint8_t polynomial, uint8
     return remainder;
 }
 
-// Print received, decoded json fragment
+// Print received, decoded json object
+// Code fragments for decoding taken from: https://github.com/merbanan/rtl_433/blob/master/src/devices/fineoffset_ws90.c
 void printPacket(uint8_t *b) {
   uint32_t id         = ((uint32_t)b[1] << 16) | ((uint32_t)b[2] << 8) | ((uint32_t)b[3]);
   uint16_t light_raw  = (b[4] << 8) | (b[5]);
-  uint32_t light_lux  = light_raw * 10;        // Lux
-  int battery_mv      = (b[6] * 20);            // mV
+  uint32_t light_lux  = light_raw * 10;  // Lux
+  int battery_mv      = (b[6] * 20);  // mV
   int battery_lvl     = battery_mv < 1400 ? 0 : (battery_mv - 1400) / 16; // 1.4V-3.0V is 0-100
   int flags           = b[7]; // to find the wind msb
   int temp_raw        = ((flags & 0x03) << 8) | (b[8]);
@@ -152,7 +153,7 @@ void printPacket(uint8_t *b) {
   Serial.println('}');
 }
 
-// Print T/H/P json fragment emulating a Fineoffset WH25 station
+// Print T/H/P json object emulating a Fineoffset WH25 station
 void printTHP() {
   float P = 0, T = 0;
   int H = -1;
