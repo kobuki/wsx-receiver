@@ -3,8 +3,8 @@
 #include <Wire.h>
 
 // #define SENSOR_TYPE_EMULATED
-#define SENSOR_TYPE_BMP280
-// #define SENSOR_TYPE_BMP388
+// #define SENSOR_TYPE_BMP280
+#define SENSOR_TYPE_BMP388
 
 #define I2C_BMP388 0x76
 #define I2C_BMP280 0x76
@@ -19,7 +19,7 @@
 #include <Adafruit_BMP280.h>
 #endif
 
-#define NAME_VERSION F("wsx-receiver v2025040701")
+#define NAME_VERSION F("wsx-receiver v2025051801")
 
 #define SERIAL_BAUD 115200
 #define DEBUG(input)   Serial.print(input);
