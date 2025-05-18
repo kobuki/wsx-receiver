@@ -3,12 +3,20 @@
 #include <Wire.h>
 
 // #define SENSOR_TYPE_EMULATED
-#define SENSOR_TYPE_BMP388
+#define SENSOR_TYPE_BMP280
+// #define SENSOR_TYPE_BMP388
+
 #define I2C_BMP388 0x76
+#define I2C_BMP280 0x76
 
 #ifdef SENSOR_TYPE_BMP388
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP3XX.h>
+#endif
+
+#ifdef SENSOR_TYPE_BMP280
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP280.h>
 #endif
 
 #define NAME_VERSION F("wsx-receiver v2025040701")
@@ -24,6 +32,10 @@ RFM69wsx radio;
 
 #ifdef SENSOR_TYPE_BMP388
 Adafruit_BMP3XX bmp388;
+#endif
+
+#ifdef SENSOR_TYPE_BMP280
+Adafruit_BMP280 bmp280;
 #endif
 
 uint32_t lastRx = 0, now = 0;
@@ -51,6 +63,12 @@ void setup(void) {
   delay(10); // safe sensor init
   bmp388.begin_I2C(I2C_BMP388);
   bmp388.performReading();
+#endif
+
+#ifdef SENSOR_TYPE_BMP280
+  bmp280.begin(I2C_BMP280);
+  bmp280.readPressure();
+  bmp280.readTemperature();
 #endif
 
   blink(750);
@@ -113,8 +131,8 @@ uint8_t crc8(uint8_t const message[], unsigned nBytes, uint8_t polynomial, uint8
 void printPacket(uint8_t *b) {
   uint32_t id         = ((uint32_t)b[1] << 16) | ((uint32_t)b[2] << 8) | ((uint32_t)b[3]);
   uint16_t light_raw  = (b[4] << 8) | (b[5]);
-  uint32_t light_lux  = light_raw * 10;  // Lux
-  int battery_mv      = (b[6] * 20);  // mV
+  uint32_t light_lux  = light_raw * 10; // Lux
+  int battery_mv      = (b[6] * 20); // mV
   int battery_lvl     = battery_mv < 1400 ? 0 : (battery_mv - 1400) / 16; // 1.4V-3.0V is 0-100
   int flags           = b[7]; // to find the wind msb
   int temp_raw        = ((flags & 0x03) << 8) | (b[8]);
@@ -164,6 +182,11 @@ void printTHP() {
   P = bmp388.pressure;
 #endif
 
+#ifdef SENSOR_TYPE_BMP280
+  T = bmp280.readTemperature();
+  P = bmp280.readPressure(); // Pa
+#endif
+
 #ifdef SENSOR_TYPE_EMULATED
   T = 25.0;
   P = 101320.0;
@@ -173,6 +196,7 @@ void printTHP() {
   // time is added by the host
   Serial.print(F("{\"model\":\"Fineoffset-WH25\",\"id\":555,\"battery_ok\":1,\"mic\":\"CRC\","));
   printJsonAttr(F("temperature_C"), T, true);
+  P *= 0.01; // convert Pa to hPa
   printJsonAttr(F("pressure_hPa"), P, H != -1);
   if (H != -1) printJsonAttr(F("humidity"), H, false);
   Serial.println('}');
@@ -192,7 +216,7 @@ void printJsonPost(bool addComma) {
 void printJsonAttr(const __FlashStringHelper * name, float value, bool addComma) {
   printJsonPre(name);
   Serial.print(value, 1);
-  printJsonPost(addComma);
+  if (addComma) Serial.print(',');
 }
 
 void printJsonAttr(class __FlashStringHelper * name, char *value, bool addComma) {
