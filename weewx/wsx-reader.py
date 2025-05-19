@@ -5,7 +5,7 @@
 import sys
 import serial
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import argparse
 
 def parse_args():
@@ -40,7 +40,7 @@ def main():
             try:
                 data = json.loads(line)
                 if isinstance(data, dict):
-                    data['time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    data['time'] = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
                     print(json.dumps(data, separators=(',', ':')), flush=True)
             except json.JSONDecodeError:
                 continue
