@@ -166,8 +166,6 @@ void printPacket(uint8_t *b) {
   Serial.println('}');
 }
 
-// void printJsonAttr(class __FlashStringHelper * name, uint8_t *value, int length, bool addComma) {
-
 // Print T/H/P json object emulating a Fineoffset WH25 station
 void printTHP() {
   float P = 0, T = 0;
