@@ -85,12 +85,6 @@ void loop() {
       return;
     }
 
-    // Serial.print("raw:");
-    // for (byte i = 0; i < 32; i++) {
-    //   if (radio.DATA[i] < 0x10) Serial.print('0');
-    //   Serial.print(radio.DATA[i], HEX);
-    // }
-
     printPacket(radio.DATA);
     printTHP();
 
@@ -167,9 +161,12 @@ void printPacket(uint8_t *b) {
   printJsonAttr(F("firmware"), firmware, true);
   printJsonAttr(F("rssi"), radio.RSSI, true);
   printJsonAttr(F("fei"), round(radio.FEI * RF69_FSTEP / 1000), true);
-  printJsonAttr(F("delay"), now - lastRx, false);
+  printJsonAttr(F("delay"), now - lastRx, true);
+  printJsonAttr(F("raw"), b, 32, false);
   Serial.println('}');
 }
+
+// void printJsonAttr(class __FlashStringHelper * name, uint8_t *value, int length, bool addComma) {
 
 // Print T/H/P json object emulating a Fineoffset WH25 station
 void printTHP() {
@@ -219,9 +216,18 @@ void printJsonAttr(const __FlashStringHelper * name, float value, bool addComma)
   if (addComma) Serial.print(',');
 }
 
-void printJsonAttr(class __FlashStringHelper * name, char *value, bool addComma) {
+void printJsonAttr(const __FlashStringHelper * name, char *value, bool addComma) {
   printJsonPre(name);
   Serial.print(value);
+  printJsonPost(addComma);
+}
+
+void printJsonAttr(const __FlashStringHelper * name, uint8_t *value, int length, bool addComma) {
+  printJsonPre(name);
+  for (byte i = 0; i < length; i++) {
+    if (value[i] < 0x10) Serial.print('0');
+    Serial.print(radio.DATA[i], HEX);
+  }
   printJsonPost(addComma);
 }
 
