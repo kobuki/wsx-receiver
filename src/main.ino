@@ -19,7 +19,7 @@
 #include <Adafruit_BMP280.h>
 #endif
 
-#define NAME_VERSION F("wsx-receiver v2025062601")
+#define NAME_VERSION F("wsx-receiver v2025062602")
 
 #define SERIAL_BAUD 115200
 #define DEBUG(input)   Serial.print(input);
@@ -270,6 +270,7 @@ void printJsonAttr(const __FlashStringHelper * name, char *value, bool addComma)
 
 void printJsonAttr(const __FlashStringHelper * name, uint8_t *value, int length, bool addComma) {
   printJsonPre(name);
+  Serial.print('"');
   for (byte i = 0; i < length; i++) {
     if (value[i] < 0x10) Serial.print('0');
     Serial.print(radio.DATA[i], HEX);
