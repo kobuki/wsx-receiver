@@ -133,7 +133,9 @@ uint8_t crc8(uint8_t const message[], unsigned nBytes, uint8_t polynomial, uint8
 
 // Code fragments for decoding taken from: https://github.com/merbanan/rtl_433/blob/master/src/devices/fineoffset_wn34.c
 void printWN34Packet(uint8_t *b) {
-  int id          = (b[1] << 16) | (b[2] << 8) | (b[3]);
+  uint32_t id     = b[1];
+  id              <<= 16;
+  id              |= (b[2] << 8) | (b[3]);
   int temp_raw    = (int16_t)((b[4] & 0x0F) << 12 | b[5] << 4); // use sign extend
   int sub_type    = (b[4] & 0xF0) >> 4;
 
