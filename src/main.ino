@@ -38,7 +38,7 @@ Adafruit_BMP3XX bmp388;
 Adafruit_BMP280 bmp280;
 #endif
 
-uint32_t lastRx = 0, now = 0;
+uint32_t lastRxWS90, lastRXWN34, now = 0;
 char buff[50];
 
 void setup(void) {
@@ -77,19 +77,30 @@ void setup(void) {
 
 void loop() {
   if (radio.receiveDone()) {
-    if (radio.DATA[0] != 0x90) return;
+    now = millis();
+    // EcoWitt/Fine Offset WS90/Wittboy weather station
+    if (radio.DATA[0] == 0x90) {
+      uint8_t crc = crc8(radio.DATA, 31, 0x31, 0x00);
+      uint8_t chk = add_bytes(radio.DATA, 31);
+      if (crc != 0 || chk != radio.DATA[31]) {
+        return;
+      }
+      printWS90Packet(radio.DATA);
+      lastRxWS90 = now;
+      printTHP();
+      blink(3);
 
-    uint8_t crc = crc8(radio.DATA, 31, 0x31, 0x00);
-    uint8_t chk = add_bytes(radio.DATA, 31);
-    if (crc != 0 || chk != radio.DATA[31]) {
-      return;
+    // EcoWitt/Fine Offset WN34 water temperature sensor
+    } else if (radio.DATA[0] == 0x34) {
+      uint8_t crc = crc8(radio.DATA, 7, 0x31, 0x00);
+      uint8_t chk = add_bytes(radio.DATA, 8);
+      if (crc != radio.DATA[7] || chk != radio.DATA[8]) {
+        return;
+      }
+      printWN34Packet(radio.DATA);
+      lastRXWN34 = now;
+      blink(3);
     }
-
-    printPacket(radio.DATA);
-    printTHP();
-
-    lastRx = now;
-    blink(3);
   }
 }
 
@@ -120,9 +131,44 @@ uint8_t crc8(uint8_t const message[], unsigned nBytes, uint8_t polynomial, uint8
     return remainder;
 }
 
-// Print received, decoded json object
+// Code fragments for decoding taken from: https://github.com/merbanan/rtl_433/blob/master/src/devices/fineoffset_wn34.c
+void printWN34Packet(uint8_t *b) {
+  int id          = (b[1] << 16) | (b[2] << 8) | (b[3]);
+  int temp_raw    = (int16_t)((b[4] & 0x0F) << 12 | b[5] << 4); // use sign extend
+  int sub_type    = (b[4] & 0xF0) >> 4;
+
+  float temp_c = 0.0f;
+  if (sub_type == 4) // WN34D
+      temp_c = (temp_raw >> 4) * 0.1f; // scale by 10 only.
+  else // WN34L/WN34S ...
+      temp_c = ((temp_raw >> 4) * 0.1f) - 40; // scale by 10, offset 40
+  int battery_mv = (b[6] & 0x7f) * 20;        // mV
+
+  int battery_bars;
+  if (battery_mv > 1440)
+      battery_bars = 5;
+  else if (battery_mv > 1380)
+      battery_bars = 4;
+  else if (battery_mv > 1300)
+      battery_bars = 3;
+  else if (battery_mv > 1200)
+      battery_bars = 2;
+  else
+      battery_bars = 1;
+  float battery_ok = (battery_bars - 1) * 0.25f;
+
+  Serial.print(F("{\"model\":\"Fineoffset-WN34\",\"mic\":\"CRC\","));
+  printJsonAttr(F("id"), id, true);
+  printJsonAttr(F("battery_ok"), battery_ok * 0.01f, true);
+  printJsonAttr(F("battery_mV"), battery_mv, true);
+  printJsonAttr(F("temperature_C"), temp_c, true);
+  if (lastRXWN34 > 0) printJsonAttr(F("delay"), now - lastRXWN34, true);
+  printJsonAttr(F("raw"), b, 9, false);
+  Serial.println('}');
+}
+
 // Code fragments for decoding taken from: https://github.com/merbanan/rtl_433/blob/master/src/devices/fineoffset_ws90.c
-void printPacket(uint8_t *b) {
+void printWS90Packet(uint8_t *b) {
   uint32_t id         = ((uint32_t)b[1] << 16) | ((uint32_t)b[2] << 8) | ((uint32_t)b[3]);
   uint16_t light_raw  = (b[4] << 8) | (b[5]);
   uint32_t light_lux  = light_raw * 10; // Lux
@@ -161,7 +207,7 @@ void printPacket(uint8_t *b) {
   printJsonAttr(F("firmware"), firmware, true);
   printJsonAttr(F("rssi"), radio.RSSI, true);
   printJsonAttr(F("fei"), round(radio.FEI * RF69_FSTEP / 1000), true);
-  printJsonAttr(F("delay"), now - lastRx, true);
+  if (lastRxWS90 > 0) printJsonAttr(F("delay"), now - lastRxWS90, true);
   printJsonAttr(F("raw"), b, 32, false);
   Serial.println('}');
 }
