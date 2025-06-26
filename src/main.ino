@@ -160,11 +160,11 @@ void printWN34Packet(uint8_t *b) {
   float battery_ok = (battery_bars - 1) * 0.25f;
 
   Serial.print(F("{\"model\":\"Fineoffset-WN34\",\"mic\":\"CRC\","));
-  printJsonAttr(F("id"), id, true, 0);
+  printJsonAttr(F("id"), id, true);
   printJsonAttr(F("battery_ok"), battery_ok * 0.01f, true);
   printJsonAttr(F("battery_mV"), battery_mv, true);
   printJsonAttr(F("temperature_C"), temp_c, true);
-  if (lastRXWN34 > 0) printJsonAttr(F("delay"), now - lastRXWN34, true, 0);
+  if (lastRXWN34 > 0) printJsonAttr(F("delay"), now - lastRXWN34, true);
   printJsonAttr(F("raw"), b, 9, false);
   Serial.println('}');
 }
@@ -192,7 +192,7 @@ void printWS90Packet(uint8_t *b) {
   if (battery_lvl > 100) battery_lvl = 100;
 
   Serial.print(F("{\"model\":\"Fineoffset-WS90\",\"mic\":\"CRC\","));
-  printJsonAttr(F("id"), id, true, 0);
+  printJsonAttr(F("id"), id, true);
   printJsonAttr(F("battery_ok"), battery_lvl * 0.01f, true);
   printJsonAttr(F("battery_mV"), battery_mv, true);
   if (temp_raw != 0x3ff) printJsonAttr(F("temperature_C"), temp_c, true);
@@ -208,8 +208,8 @@ void printWS90Packet(uint8_t *b) {
   if (supercap_V != 0xff) printJsonAttr(F("supercap_V"), supercap_V * 0.1f, true);
   printJsonAttr(F("firmware"), firmware, true);
   printJsonAttr(F("rssi"), radio.RSSI, true);
-  printJsonAttr(F("fei"), round(radio.FEI * RF69_FSTEP / 1000), true, 0);
-  if (lastRxWS90 > 0) printJsonAttr(F("delay"), now - lastRxWS90, true, 0);
+  printJsonAttr(F("fei"), round(radio.FEI * RF69_FSTEP / 1000), true);
+  if (lastRxWS90 > 0) printJsonAttr(F("delay"), now - lastRxWS90, true);
   printJsonAttr(F("raw"), b, 32, false);
   Serial.println('}');
 }
@@ -256,15 +256,9 @@ void printJsonPost(bool addComma) {
   if (addComma) Serial.print(',');
 }
 
-void printJsonAttr(const __FlashStringHelper * name, int value, bool addComma) {
+void printJsonAttr(const __FlashStringHelper * name, float value, bool addComma) {
   printJsonPre(name);
-  Serial.print(value);
-  if (addComma) Serial.print(',');
-}
-
-void printJsonAttr(const __FlashStringHelper * name, float value, bool addComma, int precision = 1) {
-  printJsonPre(name);
-  Serial.print(value, precision);
+  Serial.print(value, 1);
   if (addComma) Serial.print(',');
 }
 
