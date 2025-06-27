@@ -133,9 +133,7 @@ uint8_t crc8(uint8_t const message[], unsigned nBytes, uint8_t polynomial, uint8
 
 // Code fragments for decoding taken from: https://github.com/merbanan/rtl_433/blob/master/src/devices/fineoffset_wn34.c
 void printWN34Packet(uint8_t *b) {
-  uint32_t id     = b[1];
-  id              <<= 16;
-  id              |= (b[2] << 8) | (b[3]);
+  uint32_t id     = ((uint32_t)b[1] << 16) | ((uint32_t)b[2] << 8) | ((uint32_t)b[3]);
   int temp_raw    = (int16_t)((b[4] & 0x0F) << 12 | b[5] << 4); // use sign extend
   int sub_type    = (b[4] & 0xF0) >> 4;
 
@@ -160,11 +158,13 @@ void printWN34Packet(uint8_t *b) {
   float battery_ok = (battery_bars - 1) * 0.25f;
 
   Serial.print(F("{\"model\":\"Fineoffset-WN34\",\"mic\":\"CRC\","));
-  printJsonAttr(F("id"), id, true);
-  printJsonAttr(F("battery_ok"), battery_ok * 0.01f, true);
-  printJsonAttr(F("battery_mV"), battery_mv, true);
+  printJsonAttrUI(F("id"), id, true);
+  printJsonAttr(F("battery_ok"), battery_ok, true, 2);
+  printJsonAttrUI(F("battery_mV"), battery_mv, true);
   printJsonAttr(F("temperature_C"), temp_c, true);
-  if (lastRXWN34 > 0) printJsonAttr(F("delay"), now - lastRXWN34, true);
+  printJsonAttrI(F("rssi"), radio.RSSI, true);
+  printJsonAttrI(F("fei"), round(radio.FEI * RF69_FSTEP / 1000), true);
+  if (lastRXWN34 > 0) printJsonAttrUI(F("delay"), now - lastRXWN34, true);
   printJsonAttr(F("raw"), b, 9, false);
   Serial.println('}');
 }
@@ -192,24 +192,24 @@ void printWS90Packet(uint8_t *b) {
   if (battery_lvl > 100) battery_lvl = 100;
 
   Serial.print(F("{\"model\":\"Fineoffset-WS90\",\"mic\":\"CRC\","));
-  printJsonAttr(F("id"), id, true);
-  printJsonAttr(F("battery_ok"), battery_lvl * 0.01f, true);
-  printJsonAttr(F("battery_mV"), battery_mv, true);
+  printJsonAttrUI(F("id"), id, true);
+  printJsonAttr(F("battery_ok"), battery_lvl * 0.01f, true, 2);
+  printJsonAttrUI(F("battery_mV"), battery_mv, true);
   if (temp_raw != 0x3ff) printJsonAttr(F("temperature_C"), temp_c, true);
   if (humidity != 0xff) printJsonAttr(F("humidity"), humidity, true);
-  if (wind_dir != 0x1ff) printJsonAttr(F("wind_dir_deg"), wind_dir, true);
+  if (wind_dir != 0x1ff) printJsonAttrUI(F("wind_dir_deg"), wind_dir, true);
   if (wind_avg != 0x1ff) printJsonAttr(F("wind_avg_m_s"), wind_avg * 0.1f, true);
   if (wind_max != 0x1ff) printJsonAttr(F("wind_max_m_s"), wind_max * 0.1f, true);
   if (uv_index != 0xff) printJsonAttr(F("uvi"), uv_index * 0.1f, true);
-  if (light_raw != 0xffff) printJsonAttr(F("light_lux"), (float)light_lux, true);
-  printJsonAttr(F("flags"), flags, true);
+  if (light_raw != 0xffff) printJsonAttrUI(F("light_lux"), (float)light_lux, true);
+  printJsonAttrUI(F("flags"), flags, true);
   printJsonAttr(F("rain_mm"), rain_raw * 0.1f, true);
-  printJsonAttr(F("rain_start"), rain_start, true);
+  printJsonAttrUI(F("rain_start"), rain_start, true);
   if (supercap_V != 0xff) printJsonAttr(F("supercap_V"), supercap_V * 0.1f, true);
-  printJsonAttr(F("firmware"), firmware, true);
-  printJsonAttr(F("rssi"), radio.RSSI, true);
-  printJsonAttr(F("fei"), round(radio.FEI * RF69_FSTEP / 1000), true);
-  if (lastRxWS90 > 0) printJsonAttr(F("delay"), now - lastRxWS90, true);
+  printJsonAttrUI(F("firmware"), firmware, true);
+  printJsonAttrI(F("rssi"), radio.RSSI, true);
+  printJsonAttrI(F("fei"), round(radio.FEI * RF69_FSTEP / 1000), true);
+  if (lastRxWS90 > 0) printJsonAttrUI(F("delay"), now - lastRxWS90, true);
   printJsonAttr(F("raw"), b, 32, false);
   Serial.println('}');
 }
@@ -256,9 +256,27 @@ void printJsonPost(bool addComma) {
   if (addComma) Serial.print(',');
 }
 
+void printJsonAttrUI(const __FlashStringHelper * name, uint32_t value, bool addComma) {
+  printJsonPre(name);
+  Serial.print(value);
+  if (addComma) Serial.print(',');
+}
+
+void printJsonAttrI(const __FlashStringHelper * name, int32_t value, bool addComma) {
+  printJsonPre(name);
+  Serial.print(value);
+  if (addComma) Serial.print(',');
+}
+
 void printJsonAttr(const __FlashStringHelper * name, float value, bool addComma) {
   printJsonPre(name);
   Serial.print(value, 1);
+  if (addComma) Serial.print(',');
+}
+
+void printJsonAttr(const __FlashStringHelper * name, float value, bool addComma, int precision) {
+  printJsonPre(name);
+  Serial.print(value, precision);
   if (addComma) Serial.print(',');
 }
 
