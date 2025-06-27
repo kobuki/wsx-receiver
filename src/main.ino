@@ -19,7 +19,7 @@
 #include <Adafruit_BMP280.h>
 #endif
 
-#define NAME_VERSION F("wsx-receiver v2025062602")
+#define NAME_VERSION F("wsx-receiver v2025062701")
 
 #define SERIAL_BAUD 115200
 #define DEBUG(input)   Serial.print(input);
