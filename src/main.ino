@@ -19,7 +19,7 @@
 #include <Adafruit_BMP280.h>
 #endif
 
-#define NAME_VERSION F("wsx-receiver v2025062701")
+#define NAME_VERSION F("wsx-receiver v2025063001")
 
 #define SERIAL_BAUD 115200
 #define DEBUG(input)   Serial.print(input);
@@ -39,7 +39,7 @@ Adafruit_BMP280 bmp280;
 #endif
 
 uint32_t lastRxWS90, lastRXWN34, now = 0;
-char buff[50];
+char buf[50];
 
 void setup(void) {
   Serial.begin(SERIAL_BAUD);
@@ -172,7 +172,7 @@ void printWN34Packet(uint8_t *b) {
 // Code fragments for decoding taken from: https://github.com/merbanan/rtl_433/blob/master/src/devices/fineoffset_ws90.c
 void printWS90Packet(uint8_t *b) {
   uint32_t id         = ((uint32_t)b[1] << 16) | ((uint32_t)b[2] << 8) | ((uint32_t)b[3]);
-  uint16_t light_raw  = (b[4] << 8) | (b[5]);
+  uint32_t light_raw  = (b[4] << 8) | (b[5]);
   uint32_t light_lux  = light_raw * 10; // Lux
   int battery_mv      = (b[6] * 20); // mV
   int battery_lvl     = battery_mv < 1400 ? 0 : (battery_mv - 1400) / 16; // 1.4V-3.0V is 0-100
@@ -201,7 +201,7 @@ void printWS90Packet(uint8_t *b) {
   if (wind_avg != 0x1ff) printJsonAttr(F("wind_avg_m_s"), wind_avg * 0.1f, true);
   if (wind_max != 0x1ff) printJsonAttr(F("wind_max_m_s"), wind_max * 0.1f, true);
   if (uv_index != 0xff) printJsonAttr(F("uvi"), uv_index * 0.1f, true);
-  if (light_raw != 0xffff) printJsonAttrUI(F("light_lux"), (float)light_lux, true);
+  if (light_raw != 0xffff) printJsonAttrUI(F("light_lux"), light_lux, true);
   printJsonAttrUI(F("flags"), flags, true);
   printJsonAttr(F("rain_mm"), rain_raw * 0.1f, true);
   printJsonAttrUI(F("rain_start"), rain_start, true);
@@ -300,8 +300,8 @@ void printBanner()
 {
   Serial.print(F("# "));
   Serial.print(NAME_VERSION);
-  sprintf(buff, " - listening at: %ld Hz", LISTEN_FREQUENCY);
-  Serial.println(buff);
+  sprintf(buf, " - listening at: %ld Hz", LISTEN_FREQUENCY);
+  Serial.println(buf);
 }
 
 void blink(int blinkDelay) {
